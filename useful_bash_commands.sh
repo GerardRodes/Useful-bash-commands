@@ -37,3 +37,26 @@ gitm () {
     fi
   fi
 }
+
+## replaces string recursively at specified path
+replace () {
+  folder=''
+  old=''
+  new=''
+
+  if [ -z "$1" ]; then
+    echo "Must specify old string"
+    return 1
+  fi
+  old=$(echo "${1//\//\\/}")
+  new=$(echo "${2//\//\\/}")
+
+  if [ -z "$3" ]; then
+    echo "Must specify a target path"
+    return 1
+  fi
+  folder=$3
+
+  echo "replacing $1 for $2 at $folder s/$old/$new/g"
+  find "$folder" -type f -print0 | xargs -0 sed -i "s/$old/$new/g"
+}

@@ -17,7 +17,10 @@ docker-kill-all () {
 
 ## adds changes, commits, and pushes
 gitp () {
-  gitc "$@" && git push;
+  if [ -n "$1" ]; then
+    gitc "$1";
+  fi
+  git push;
 }
 
 ## merges current branche with branch name provided as argument

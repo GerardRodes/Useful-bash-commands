@@ -1,3 +1,5 @@
+CACHE_FOLDER="$HOME/.cache/custom-bash-functions"
+
 _addTaskIDtoMessage () {
   TASK_ID_REGEX="\/(TD-[0-9]+)"
 
@@ -10,6 +12,21 @@ _addTaskIDtoMessage () {
   echo $1
 }
 
+_saveCache () {
+  mkdir -p "$CACHE_FOLDER"
+
+  FILE="$CACHE_FOLDER/$1"
+
+  rm -f "$FILE"
+  touch "$FILE"
+
+  echo "$2" >> "$FILE"
+}
+
+_readCache () {
+  cat "$CACHE_FOLDER/$1"
+}
+
 docker-kill-all () {
   docker stop $(docker ps -a -q);
   docker rm $(docker ps -a -q);
@@ -17,12 +34,13 @@ docker-kill-all () {
 
 gitc () {
   git add .
-  git commit -m "$(_addTaskIDtoMessage $1)"
+  msg=$(echo "$*" | tr -s ' ')
+  git commit -m "$(_addTaskIDtoMessage $msg)"
 }
 
 gitp () {
   if [ -n "$1" ]; then
-    gitc "$1";
+    gitc $*;
   fi
 
   git push --set-upstream origin "$(git branch | grep \* | cut -d ' ' -f2)";
@@ -30,14 +48,14 @@ gitp () {
 
 gitpr () {
   if [ -n "$1" ]; then
-    gitc "$1";
+    gitc $*;
   fi
   branch_name="$(git branch | grep \* | cut -d ' ' -f2)"
   git push --set-upstream origin $branch_name
 
   remote_url="$(git config --local remote.origin.url)"
   if [[ $remote_url =~ ':([^\.]+)' ]]; then
-    xdg-open "https://bitbucket.org/${match[1]}/pull-requests/new?source=$branch_name&t=1" > /dev/null
+    xdg-open "https://bitbucket.org/${match[1]}/pull-requests/new?source=$branch_name&dest=development" &> /dev/null
   fi
 }
 
@@ -59,9 +77,18 @@ gitm () {
 }
 
 # Create a new branch
-# gcreate feature 1502 alert user on error
-# feature/TD-1502-alert-user-on-error
+# USAGE:
+#   gcreate [f|feature, b|bugfix, -|cache] [task id] message...
+#   gcreate f 1502 alert user on error
+#     -> feature/TD-1502-alert-user-on-error
+#   gcreate -
+#     -> last branch created
 gcreate () {
+  if [ "$1" = "-" ]; then
+    gco -b "$(_readCache gcreate)"
+    return 0
+  fi
+
   BRANCH_TYPE="${1:0:1}"
   if [ "$BRANCH_TYPE" = "f" ]; then
     BRANCH_TYPE="feature"
@@ -79,8 +106,7 @@ gcreate () {
   if [[ "$1" =~ $TASK_ID_REGEX ]]; then
     TASK_ID="TD-${match[1]}"
   else
-    echo "Specify a task number id"
-    return 1
+    TASK_ID="UR"
   fi
 
   shift
@@ -90,17 +116,18 @@ gcreate () {
     BRANCH_NAME="$BRANCH_NAME-$(echo "$*" | tr -s ' ' | sed 's/ /-/g' | tr '[:upper:]' '[:lower:]')"
   fi
 
+  _saveCache "gcreate" "$BRANCH_NAME"
   gco -b $BRANCH_NAME
 }
 
 gitc_r () {
   mv .node_modules node_modules 2>/dev/null || true
-  gitc $1
+  gitc $*
   mv node_modules .node_modules 2>/dev/null || true
 }
 
 gitp_r () {
   mv .node_modules node_modules 2>/dev/null || true
-  gitp $1
+  gitp $*
   mv node_modules .node_modules 2>/dev/null || true
 }

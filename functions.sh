@@ -39,14 +39,30 @@ gitc () {
 }
 
 gitp () {
+  has_been_moved=false
+  if [ -d .node_modules ]; then
+    mv .node_modules node_modules 2>/dev/null || true
+    has_been_moved=true
+  fi
+
   if [ -n "$1" ]; then
     gitc $*;
   fi
 
   git push --set-upstream origin "$(git branch | grep \* | cut -d ' ' -f2)";
+
+  if [ "$has_been_moved" = true ] && [ -d node_modules ]; then
+    mv node_modules .node_modules 2>/dev/null || true
+  fi
 }
 
 gitpr () {
+  has_been_moved=false
+  if [ -d .node_modules ]; then
+    mv .node_modules node_modules 2>/dev/null || true
+    has_been_moved=true
+  fi
+
   if [ -n "$1" ]; then
     gitc $*;
   fi
@@ -56,6 +72,10 @@ gitpr () {
   remote_url="$(git config --local remote.origin.url)"
   if [[ $remote_url =~ ':([^\.]+)' ]]; then
     xdg-open "https://bitbucket.org/${match[1]}/pull-requests/new?source=$branch_name&dest=development" &> /dev/null
+  fi
+
+  if [ "$has_been_moved" = true ] && [ -d node_modules ]; then
+    mv node_modules .node_modules 2>/dev/null || true
   fi
 }
 
@@ -120,14 +140,22 @@ gcreate () {
   gco -b $BRANCH_NAME
 }
 
-gitc_r () {
-  mv .node_modules node_modules 2>/dev/null || true
-  gitc $*
-  mv node_modules .node_modules 2>/dev/null || true
-}
+gcos () {
+  branch_name=$(git branch -a | grep $@ | head -n 1 | sed 's/ //g')
 
-gitp_r () {
-  mv .node_modules node_modules 2>/dev/null || true
-  gitp $*
-  mv node_modules .node_modules 2>/dev/null || true
+  if [ -z $branch_name ]; then
+    git fetch
+    branch_name=$(git branch -a | grep $@ | head -n 1 | sed 's/ //g')
+    if [ -z $branch_name ]; then
+      echo "No branch found for $@"
+      return 1
+    fi
+  fi
+
+  REMOTE_REGEX="^(remotes/[^/]*/)"
+  if [[ "$branch_name" =~ $REMOTE_REGEX ]]; then
+    branch_name="${branch_name//${match[1]}/}"
+  fi
+
+  gco $branch_name
 }

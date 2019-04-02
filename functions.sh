@@ -41,7 +41,7 @@ gitc () {
 gitp () {
   has_been_moved=false
   if [ -d .node_modules ]; then
-    mv .node_modules node_modules 2>/dev/null || true
+    mv .node_modules node_modules
     has_been_moved=true
   fi
 
@@ -57,25 +57,14 @@ gitp () {
 }
 
 gitpr () {
-  has_been_moved=false
-  if [ -d .node_modules ]; then
-    mv .node_modules node_modules 2>/dev/null || true
-    has_been_moved=true
-  fi
-
   if [ -n "$1" ]; then
-    gitc $*;
+    gitp $*;
   fi
-  branch_name="$(git branch | grep \* | cut -d ' ' -f2)"
-  git push --set-upstream origin $branch_name
 
   remote_url="$(git config --local remote.origin.url)"
+  branch_name="$(git branch | grep \* | cut -d ' ' -f2)"
   if [[ $remote_url =~ ':([^\.]+)' ]]; then
     xdg-open "https://bitbucket.org/${match[1]}/pull-requests/new?source=$branch_name&dest=development" &> /dev/null
-  fi
-
-  if [ "$has_been_moved" = true ] && [ -d node_modules ]; then
-    mv node_modules .node_modules 2>/dev/null || true
   fi
 }
 
@@ -114,8 +103,10 @@ gcreate () {
     BRANCH_TYPE="feature"
   elif [ "$BRANCH_TYPE" = "b" ]; then
     BRANCH_TYPE="bugfix"
+  elif [ "$BRANCH_TYPE" = "h" ]; then
+    BRANCH_TYPE="hotfix"
   else
-    echo "Specify a branch type, feature or bugfix"
+    echo "Specify a branch type: feature, bugfix or hotfix"
     return 1
   fi
 

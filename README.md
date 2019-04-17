@@ -1,1 +1,1 @@
-# Bash aliases and functions I usually use
+Bash aliases and functions I usually use

@@ -150,3 +150,13 @@ gcos () {
 
   gco $branch_name
 }
+
+ddos () {
+  URL=$1
+  TIMES=$2
+
+  for ((n=0; n<$TIMES; n++))
+  do
+    wget $URL
+  done
+}

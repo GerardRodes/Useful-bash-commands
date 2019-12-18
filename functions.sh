@@ -33,7 +33,7 @@ docker-kill-all () {
 }
 
 gitc () {
-  git add .
+  git add -A
   msg=$(echo "$*" | tr -s ' ')
   git commit -m "$(_addTaskIDtoMessage $msg)"
 }
@@ -54,6 +54,10 @@ gitp () {
   if [ "$has_been_moved" = true ] && [ -d node_modules ]; then
     mv node_modules .node_modules 2>/dev/null || true
   fi
+}
+
+gitpp () {
+  gitp $* && yarn build && yarn publish --patch;
 }
 
 gitpr () {

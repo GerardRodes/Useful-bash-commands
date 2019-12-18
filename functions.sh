@@ -164,3 +164,7 @@ ddos () {
     wget $URL
   done
 }
+
+pipu ()  {
+  pip $@ --user
+}

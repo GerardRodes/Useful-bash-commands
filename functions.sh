@@ -57,7 +57,7 @@ gitp () {
 }
 
 gitpp () {
-  gitp $* && yarn build && yarn publish --patch;
+  yarn build && yarn publish --patch && gitp $*;
 }
 
 gitpr () {
